@@ -38,8 +38,11 @@ labelday$chamber <- factor(labelday$chamber)
 #- get all of the isotope data (note, this function needs edition when all data have been entered)
 isodat <- getIso()
 
-#- pull out just the labeling data, plot over time for each chamber
+#- pull out just the labeling data, calculate atom percent C
 labeling <-subset(isodat,type=="LAB")
+ARC <- 0.0111803 # absolute ratio of VPDB. See http://www.isotope.uottawa.ca/guides/guides-atom-percent-en.html
+labeling$AP <- with(labeling,(100*ARC*(d13C/1000+1)) / (1+ARC*(d13C/1000+1)) ) 
+
 #------------------------------------------------------------------------
 
 
@@ -47,19 +50,22 @@ labeling <-subset(isodat,type=="LAB")
 
 #------------------------------------------------------------------------
 #- plot par, co2 uptake, and canopy isotopic composition. Note that ambient chambers have lower Co2 uptake.
-windows(80,60);par(mfrow=c(3,1),mar=c(1,6,1,1),oma=c(5,2,0,0),cex.lab=2)
+windows(100,60);par(mfrow=c(4,1),mar=c(1,6,1,1),oma=c(5,2,0,0),cex.lab=2)
 #palette(c("black",brewer.pal(5,"Spectral")))
 palette(c("red","blue","orange","darkgrey","brown","lightblue"))
 
 plotBy(PAR~DateTime|chamber,data=labelday,type="o",ylab="PAR",legendwhere="topright",pch=16,cex=1.5)   ;abline(h=0)
 plotBy(FluxCO2~DateTime|chamber,data=labelday,ylim=c(-0.1,0.3),,pch=16,cex=1.5,type="o",ylab="CO2 Flux (mmol s-1)",legend=F)   ;abline(h=0)
 plotBy(d13C~Collection.DateTime|chamber,data=labeling,pch=16,cex=1.5,type="b")
+plotBy(AP~Collection.DateTime|chamber,data=labeling,pch=16,cex=1.5,type="b")
+
 #------------------------------------------------------------------------
 
 
+
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
-#- Break into a list, interpolate into a secondly-resolved and interpolated
+#- Break into a list, interpolate into a minutely-resolved and interpolated
 #  time series, and calculate the amount of label assimilated by each chamber
 library(zoo)
 
