@@ -29,9 +29,13 @@ Library(doBy)
 Library(plyr)
 Library(RColorBrewer)
 Library(reshape2)
+Library(data.table)
+
+#- load the data manipulation functions
+source("R/dataFunctions.R")
 
 #- create directories, if needed
-#if(!dir.exists("output"))dir.create("output")
+if(!dir.exists("output"))dir.create("Output")
 #if(!dir.exists("cache"))dir.create("cache")
 
 #----------------------------------------------------------------------------------------------------------------
