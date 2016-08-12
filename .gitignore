@@ -1,0 +1,14 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+
+# pdfs in output folder
+Output/*.pdf
+
+# the entire data folder
+Data/
+
+# the .Rproj file
+WTC4_d13C.Rproj
