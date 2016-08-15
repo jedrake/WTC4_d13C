@@ -34,6 +34,7 @@ Library(zoo)
 
 #- load the data manipulation functions
 source("R/dataFunctions.R")
+source("R/processingFunctions.R")
 
 #- create directories, if needed
 if(!dir.exists("output"))dir.create("Output")
