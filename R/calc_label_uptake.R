@@ -98,7 +98,7 @@ for(i in 1:length(iso.l)){
   
   
   
-  
+  #- extract just the variables to interpolate
   isodat2 <- isodat[,c("d13C","AP","FluxCO2")]
   
   #- time series of isotope data
@@ -115,7 +115,7 @@ for(i in 1:length(iso.l)){
   
   
   
-  #- much of the flux data are missing for chamber 8. I'm not sure what happened here, but I think we lost the local IRGA
+  #- some of the flux data are missing for chamber 8. I'm not sure what happened here, but I think we lost the local IRGA
   #  and had to reset the PSOIX module (and thus lost diffP and CO2L) during the labeling. This means that the system
   #  can't calculate the fluxes as it normally does.
   #- As a placeholder solution, I'm estimating the C08 fluxes using the C06 fluxes, which is defensible.
@@ -134,7 +134,7 @@ for(i in 1:length(iso.l)){
 }
 #- merge the lists back into a big dataframe
 isodat.int <- do.call(rbind,iso.interp.l)
-isodat.int <- isodat.int[complete.cases(isodat.int),] # get rid of NA's
+isodat.int <- isodat.int[complete.cases(isodat.int),] # get rid of leading and trailing NA's
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
 
