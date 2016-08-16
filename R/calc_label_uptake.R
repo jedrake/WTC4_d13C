@@ -42,6 +42,11 @@ isodat <- getIso()
 labeling <-subset(isodat,type=="LAB")
 labeling$AP <- getAP(labeling$d13C) # AP has units of %
 
+#- figure out the start and end times for all chambers, order by chamber number
+starttimes <- subset(labeling,timefactor=="A")[,c("chamber","Collection.DateTime")]
+starttimes <- starttimes[with(starttimes,order(chamber)),]
+stoptimes <- subset(labeling,timefactor=="I")[,c("chamber","Collection.DateTime")]
+stoptimes <- stoptimes[with(stoptimes,order(chamber)),]
 #------------------------------------------------------------------------
 
 
@@ -195,7 +200,6 @@ isodat.sums <- isodat.sums[c(3,1,2,4)]
 #- find all of the labeling datafiles of [CO2] overtime as measured by the Viasala probes
 files <- list.files(path="Data/Viasala/Post-labeling/",pattern="LAB")
 
-
 fits.all <- list() #- preallocate a list to "catch" the output of the fits
 #- look over each file, read in the data
 for (i in 1:length(files)){
@@ -212,8 +216,83 @@ for (i in 1:length(files)){
   dat <- subset(dat,DateTime>mintime+60) # remove the first 60 seconds
   dat$dTime <- as.numeric(difftime(dat$DateTime,mintime,units="mins"))
   
+  #- create minutely averages
+  dat$DateTime_min <- nearestTimeStep(dat$DateTime,nminutes=1,align="floor")
+  dat.m <- summaryBy(CO2+dTime~DateTime_min,data=dat,FUN=mean,keep.names=T)
+  dat.m$dCO2 <- c(NA,diff(dat.m$CO2)) #ppm per hour
+
+  #- adjust the times to be "correct"
+  dat.m$DateTime <- nearestTimeStep(starttimes$Collection.DateTime[i]+60*dat.m$dTime,nminutes=1,"floor")
+  
+  #- exclude data after the [CO2] increased strongly near the end of the dataset (i.e., we vented)
+  stoptime <- min(which(dat.m$dCO2>15))
+  dat.m <- dat.m[1:stoptime-1,]
+  
+  #- calculate the molar rate of CO2 uptake. Convert units from umol mol-1 to mol CO2.
+  #  22.4 L per mol, chambers are 53 cubic meters in volume (so 53000 L)
+  dat.m$dCO2_mol <- with(dat.m,dCO2/22.4*53000*1e-6)
+  
+  
+  
+  
+  #---- pull in the isotopic timeseries dataframe (see above)
+  isodat <- iso.l[[i]]
+  
+  #- replace <NA> values with NA
+  isodat[which(is.na(isodat$d13C)),"d13C"] <- NA
+  
+  #- extract just the variables to interpolate
+  isodat2 <- isodat[,c("d13C","AP")]
+  
+  #- time series of isotope data
+  zoo.iso <- zoo(isodat2)
+  
+  #- NA approximation by linear interpolation
+  iso.interp <- zoo::na.approx(zoo.iso,na.rm=F) 
+  
+  #- put it back to a normal dataframe (get out of zoo format), add informative variables back
+  iso.interp2 <- data.frame(coredata(iso.interp))
+  iso.interp2$DateTime <- isodat$DateTime
+  iso.interp2$chamber <- isodat$chamber
+  
+  
+  #--- merge isotope dataframe with the viasala data
+  viasala <- merge(iso.interp2,dat.m,by="DateTime")
+  viasala$uptake13C <- with(viasala,-1*dCO2_mol*AP/100*1000) # mmol 13CO2 min-1 
+  
+  #- sum uptake
+  viasala.sums <- summaryBy(uptake13C~chamber,data=viasala,FUN=sum,keep.names=T,na.rm=T)
+
+  #- convert mmol 13CO2 to g 13C
+  viasala.sums$uptake13C_g <- viasala.sums$uptake13C/1000*13
+  names(viasala.sums)[2] <- c("uptake13CO2_mmol")
+  
+  fits.all[[i]] <- viasala.sums
+  
 }
+viasala.sums <- do.call(rbind,fits.all)
+viasala.sums$T_treatment <- factor(rep(c("elevated","ambient"),3),levels=c("ambient","elevated"))
+
+#- rearrange to make it pretty
+viasala.sums <- viasala.sums[c(4,1,2,3)]
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
 
 
+
+
+
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#-- Look at results
+
+#- estimates are a little different, but correlated. Fluxes estimate a higher amount of label uptake.
+isodat.sums
+viasala.sums
+plot(isodat.sums$uptake13C_g~viasala.sums$uptake13C_g,cex=2,pch=16)
+abline(0,1)
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------

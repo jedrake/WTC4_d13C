@@ -4,9 +4,11 @@
 
 
 # do this once
-# devtools::install_bitbucket("remkoduursma/plotby")
-library(plotBy)
+#devtools::install_bitbucket("remkoduursma/HIEv")
+#devtools::install_bitbucket("remkoduursma/plotBy")
 
+library(plotBy)
+library(HIEv)
 #- little function to check for required libraries, and install them if required
 Library <- function(pkg, ...){
   
