@@ -45,7 +45,7 @@ for (i in 1:length(files)){
   
 }
 
-#- compile the output
+#- compile the output. Note that "Rsoil" has units of umol CO2 m-2 s-1.
 outdat <- do.call(rbind,fits.all)
 outdat$chamber <- factor(outdat$chamber,levels=c("C01","C02","C04","C05","C06","C07","C08","C09"))
 link <- data.frame(chamber=levels(outdat$chamber),

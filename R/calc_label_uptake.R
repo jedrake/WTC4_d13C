@@ -162,3 +162,58 @@ names(isodat.sums)[2] <- c("uptake13CO2_mmol")
 isodat.sums <- isodat.sums[c(3,1,2,4)]
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- This bit does a similar calculation, but using the Viasala data of [CO2]
+
+
+#- find all of the labeling datafiles of [CO2] overtime as measured by the Viasala probes
+files <- list.files(path="Data/Viasala/Post-labeling/",pattern="LAB")
+
+
+fits.all <- list() #- preallocate a list to "catch" the output of the fits
+#- look over each file, read in the data
+for (i in 1:length(files)){
+  
+  #- note that the first file "12-LAB-C04-2016-08-05.csv" was recorded by a viasala with the
+  #  wrong date and time set. It was not the 31st of Dec 2001 (what an exciting date to get wrong!).
+  #  Ugh. 
+  
+  #- read in the data, do some housekeeping
+  dat <- read.csv(file=paste("Data/Viasala/Post-labeling/",files[i],sep=""))[,1:2]
+  names(dat) <- c("DateTime","CO2")
+  dat$DateTime <- as.POSIXct(dat$DateTime,format="%d/%m/%Y %I:%M:%S %p",tz="UTC")
+  mintime <- dat$DateTime[1]
+  dat <- subset(dat,DateTime>mintime+60) # remove the first 60 seconds
+  dat$dTime <- as.numeric(difftime(dat$DateTime,mintime,units="mins"))
+  
+}
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
