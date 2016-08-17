@@ -6,11 +6,22 @@
 #------------------------------------------------------------------------
 
 
+#------------------------------------------------------------------------
+#-- load the required libraries
+source("R/loadLibraries.R")
+#------------------------------------------------------------------------
+
+
+
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- Data processing
 
 #- find all of the soil respiration files, measured post-labeling
 files <- list.files(path="Data/Viasala/Post-labeling/",pattern="SR")
-
-
 
 fits.all <- list() #- preallocate a list to "catch" the output of the fits
 #- look over each file, read in the data
@@ -51,16 +62,27 @@ outdat$chamber <- factor(outdat$chamber,levels=c("C01","C02","C04","C05","C06","
 link <- data.frame(chamber=levels(outdat$chamber),
                    T_treatment=c("ambient","elevated","elevated","ambient","elevated","ambient","elevated","ambient"))
 outdat <- merge(outdat,link,by="chamber")
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
 
 
-#- plot chambers
-windows(60,40)
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- plot output
+
+#- plot Rsoil for each chamber
+pdf(file=paste("Output/Rsoil_rates_",Sys.Date(),".pdf",sep=""))
 palette(c("green","darkred","red","blue","orange","darkgrey","brown","lightblue"))
 plotBy(Rsoil~DateTime|chamber,data=outdat,type="o",pch=16)
 
-#- plot treatments
+#- plot Rsoil for each treatment
 outdat.m <- summaryBy(Rsoil~T_treatment+DateTime,data=outdat,FUN=c(mean,standard.error))
 
 plotBy(Rsoil.mean~DateTime|T_treatment,data=outdat.m,col=c("blue","red"),pch=16,ylim=c(0,5),
        panel.first=adderrorbars(x=outdat.m$DateTime,y=outdat.m$Rsoil.mean,
                                 SE=outdat.m$Rsoil.standard.error,direction="updown"))
+dev.off()
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
