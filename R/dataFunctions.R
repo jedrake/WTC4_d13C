@@ -51,10 +51,16 @@ getIso <- function(){
   #    (bag's weren't closed, as Mike was new to the valves). Remove these data.
   toremove <- which(isodat$Batch.DateTime==as.POSIXct("2016-08-07 17",format="%Y-%m-%d %H",tz="UTC") & isodat$type=="LR")
   isodat2 <- isodat[-toremove,]
+  
+  #- remove a bad point of soil respiraiton measurement. C05-C at 6am on 6 Aug 2016
+  toremove2 <- which(isodat2$Batch.DateTime==as.POSIXct("2016-08-06 06",format="%Y-%m-%d %H",tz="UTC") 
+                          & isodat2$type=="SR" & isodat2$chamber=="C05" & isodat2$timefactor=="C")
+  isodat3 <- isodat2[-toremove2,]
+  
   #--------------------------------------
   
   
-  return(isodat2)
+  return(isodat3)
 }
 #-------------------------------------------------------------------------------------
 

@@ -34,7 +34,9 @@ isoLR.m2 <- summaryBy(d13C~T_treatment+Batch.DateTime,data=isoLR2,FUN=c(mean,sta
 isoLR3 <- isoLR[(isoLR$chamber %in% c("C01","C02")),] # exclude C01 and C02
 isoLR.m3 <- summaryBy(d13C~Batch.DateTime,data=isoLR3,FUN=c(mean,standard.error))
 
+#---
 #- plot treatment averages
+pdf(file=paste("Output/Rleaf_d13C_",Sys.Date(),".pdf",sep=""))
 plotBy(d13C.mean~Batch.DateTime|T_treatment,data=isoLR.m2,col=c("blue","red"),pch=16,ylim=c(-30,1300),legend="F",
        panel.first=adderrorbars(x=isoLR.m2$Batch.DateTime,y=isoLR.m2$d13C.mean,
                                 SE=isoLR.m2$d13C.standard.error,direction="updown"))
@@ -46,4 +48,5 @@ abline(h=0)
 
 #- add a legend
 legend("topright",pch=16,col=c("blue","red","black"),legend=c("Ambient","Warmed","Unlabeled"))
+dev.off()
 #------------------------------------------------------------------------

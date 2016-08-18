@@ -86,3 +86,62 @@ plotBy(Rsoil.mean~DateTime|T_treatment,data=outdat.m,col=c("blue","red"),pch=16,
 dev.off()
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- okay, now fit all the keeling plots to estimate the d13C of Rsoil.
+
+#- get the data
+isodat <- getIso()
+isoRsoil <- subset(isodat,type=="SR")
+
+#- break into a list, fit the keeling plots. "Keeling_int" reflects the estimated 
+#  isotopic composition of soil respiration
+isoRsoil.l <- split(isoRsoil,as.factor(paste(isoRsoil$chamber,isoRsoil$Batch.DateTime,sep="-")))
+RsoilKP <- lapply(isoRsoil.l,FUN=fitKeeling)
+RsoilKP.df <- do.call(rbind,RsoilKP)
+
+
+#- plot chambers and then treatment averages
+
+#------------------------------------------------------------------------
+#- plot chambers over time 
+plotBy(Keeling_int~Batch.DateTime|chamber,data=RsoilKP.df,legend=F)
+plotBy(r2~Batch.DateTime|chamber,data=RsoilKP.df,legend=F,ylim=c(0,1))
+
+#- calculate treatment averages over time, exclude C01 and C02
+isoSR2 <- RsoilKP.df[!(RsoilKP.df$chamber %in% c("C01","C02")),] # exclude C01 and C02
+isoSR.m2 <- summaryBy(Keeling_int~T_treatment+Batch.DateTime,data=isoSR2,FUN=c(mean,standard.error))
+
+#- get averages of CO1 and CO2 to add
+isoSR3 <- RsoilKP.df[(RsoilKP.df$chamber %in% c("C01","C02")),] # exclude C01 and C02
+isoSR.m3 <- summaryBy(Keeling_int~Batch.DateTime,data=isoSR3,FUN=c(mean,standard.error))
+
+
+#---
+#- plot treatment averages
+pdf(file=paste("Output/Rsoil_d13C_",Sys.Date(),".pdf",sep=""))
+plotBy(Keeling_int.mean~Batch.DateTime|T_treatment,data=isoSR.m2,col=c("blue","red"),pch=16,ylim=c(-30,200),legend="F",
+       panel.first=adderrorbars(x=isoSR.m2$Batch.DateTime,y=isoSR.m2$Keeling_int.mean,
+                                SE=isoSR.m2$Keeling_int.standard.error,direction="updown"))
+#- add the non-labeled trees
+points(Keeling_int.mean~Batch.DateTime,data=isoSR.m3,pch=16,col="black",
+       panel.first=adderrorbars(x=isoSR.m3$Batch.DateTime,y=isoSR.m3$Keeling_int.mean,
+                                SE=isoSR.m3$Keeling_int.standard.error,direction="updown"))
+abline(h=0)
+
+#- add a legend
+legend("topright",pch=16,col=c("blue","red","black"),legend=c("Ambient","Warmed","Unlabeled"))
+dev.off()
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------

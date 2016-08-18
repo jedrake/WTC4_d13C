@@ -52,17 +52,32 @@ fitRsoil <- function(dat,chamber,plotson=F){
 
 
 #-------------------------------------------------------------------------------------
-#- function to fit keeling plots
-fitKeeling <- function(CO2,d13C){
+#- function to fit keeling plots. Accepts and returns a dataframe.
+fitKeeling <- function(dat,plotson=F){
+  
+  #- exctract some bits from the dataframe
+  CO2 <- dat$CO2
+  d13C <- dat$d13C
   CO2i <- 1/CO2
+  
+  #- fit the keeling plot, extract the intercept
   lm1 <- lm(d13C~CO2i)
-  
-  plot(d13C~CO2i)
-  abline(lm1)
-  
   intercept <- coef(lm1)[1]
   names(intercept) <- "Keeling_int"
-  return(intercept)
+  r2 <- summary(lm1)$r.squared
+  names(r2) <- "r2"
+  
+  #- plot, if requested
+  if(plotson==T){
+    plot(d13C~CO2i)
+    abline(lm1)
+  }
+  
+
+  #- aggregate output
+  outputdf <- data.frame(chamber=dat$chamber[1],T_treatment=dat$T_treatment[1],Batch.DateTime=dat$Batch.DateTime[1],
+                         Keeling_int=intercept,r2=r2)
+  return(outputdf)
 }
 #-------------------------------------------------------------------------------------
 
