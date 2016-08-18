@@ -100,6 +100,42 @@ standard.error <- function(dat,na.rm=F,...){
 
 
 
+#----------------------------------------------------------------------------------------------------------------
+#- function to remove some known-bad flux data
+cleanFluxData <- function(flux){
+
+  #- door open
+  torm <- which(flux$DoorCnt > 0)
+  flux[torm,"FluxCO2"] <- NA
+  
+  # The central IRGA pump died at ~7pm on 16 Aug. NA-fill those data
+  torm1 <- which(flux$DateTime > as.POSIXct("2016-08-16 18:30:00",tz="UTC") & flux$DateTime < as.POSIXct("2016-08-16 21:30:00",tz="UTC"))
+  flux[torm1,"FluxCO2"] <- NA
+  
+  # We also have crazy data after 20:30 on Tuesday 8 Aug continuing to 7am on 9 Aug.
+  torm2 <- which(flux$DateTime > as.POSIXct("2016-08-8 20:30:00",tz="UTC") & flux$DateTime < as.POSIXct("2016-08-9 07:15:00",tz="UTC"))
+  flux[torm2,"FluxCO2"] <- NA
+  
+  #- people we in the chambers doing the growth measurements on 17 Aug 2016. The DoorCnt didn't catch all the bad data,
+  #  so remove some based on crazy CO2 concentrations
+  torm3 <- which(flux$FluxCO2 < -0.03)
+  torm4 <- which(flux$FluxCO2 > 0.3)
+  flux[c(torm3,torm4),"FluxCO2"] <- NA
+  
+  #- subtract one day from the date of night-time measurements after midnight but before 5am
+  #  This makes it easier to calculate nightly-mean respiration rates
+  flux$Date_night <- flux$Date
+  toadd <- which(hour(flux$DateTime)<=5)
+  flux$Date_night[toadd] <- flux$Date[toadd]-1
+  
+  return(flux)
+}
+#----------------------------------------------------------------------------------------------------------------
+
+
+
+
+
 
 #----------------------------------------------------------------------------------------------------------------
 # Adds error bars to a plot

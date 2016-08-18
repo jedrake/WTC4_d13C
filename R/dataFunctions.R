@@ -38,7 +38,7 @@ getIso <- function(){
   
   #- add the treatment
   linkdf <- data.frame(chamber=c("C01","C02","C04","C05","C06","C07","C08","C09"),
-                       T_treatment=c("ambient","warmed",rep(c("warmed","ambient"),3)))
+                       T_treatment=c("ambient","elevated",rep(c("elevated","ambient"),3)))
   isodat <- merge(isodat,linkdf,by="chamber")
   
   
@@ -72,7 +72,11 @@ getIso <- function(){
 #-------------------------------------------------------------------------------------
 #---- read in the flux data, do some manipulation, and return a dataframe
 getFluxes <- function(){
-  flux <- as.data.frame(data.table::fread("Data/WTC_TEMP-PARRA_WTCFLUX_20160228-20160811_L0.csv"))
+  file <- list.files(path="Data",pattern="WTCFLUX",full.names=T)
+  if (length(file)>1){
+    print("error- too many flux datafiles in data folder. Remove all WTCFLUX files except the target file.")
+  }
+  flux <- as.data.frame(data.table::fread(file))
   
   #- make factors
   flux$chamber <- as.factor(flux$chamber)
