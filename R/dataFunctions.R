@@ -95,7 +95,9 @@ getFluxes <- function(){
 #- function to return the atom percent 13C from a vector of per-mill data
 getAP <- function(d13C){
   ARC <- 0.0111803 # absolute ratio of VPDB. See http://www.isotope.uottawa.ca/guides/guides-atom-percent-en.html
-  AP <- (100*ARC*(d13C/1000+1)) / (1+ARC*(d13C/1000+1))
+  #AP <- (100*ARC*(d13C/1000+1)) / (1+ARC*(d13C/1000+1))
+  
+  AP <- (d13C/1000+1)*ARC*100 # alternative formulation. Is this right?
   return(AP)
 }
 #-------------------------------------------------------------------------------------

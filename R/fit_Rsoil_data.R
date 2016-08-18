@@ -145,3 +145,35 @@ legend("topright",pch=16,col=c("blue","red","black"),legend=c("Ambient","Warmed"
 dev.off()
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
+
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- okay then, let's merge the estimates of teh Rsoil flux
+#  and isotopic composition to estimate the total amount of 13C
+#  label respired belowground.
+head(isoSR2)
+head(outdat)
+
+#- daily average Rsoil rate
+outdat$Date <- as.Date(outdat$DateTime)
+Rsoil.d <- summaryBy(Rsoil~Date+chamber+T_treatment,data=outdat,FUN=mean,keep.names=T)
+
+#- daily average Rsoil d13C
+isoSR2$Date <- as.Date(isoSR2$Batch.DateTime)
+Rsoil.d13C.d <- summaryBy(Keeling_int~Date+chamber+T_treatment,data=isoSR2,FUN=mean,keep.names=T)
+
+#- merge
+Rsoil <- merge(Rsoil.d,Rsoil.d13C.d,by=c("Date","chamber","T_treatment"))
+Rsoil$AP <- getAP(Rsoil$Keeling_int)
+
+#- calculate 13C flux rate. Note that the chambers have a diameter of 3.25m
+area <- pi*(3.25/2)^2
+Rsoil$Rsoil_13C <- with(Rsoil,Rsoil*AP/100*60*60*1e-6*13*area*1000) #convert to units of mg 13C day-1
+summaryBy(Rsoil_13C~chamber+T_treatment,data=Rsoil,FUN=sum) 
+# C04 assimilated a total of ~717 mg 13C, but respired 56 mg 13C belowground in just the first few days.
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------

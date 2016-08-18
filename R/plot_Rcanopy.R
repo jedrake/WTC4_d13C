@@ -135,9 +135,11 @@ Rcanopy <- merge(CR_KP.df,flux.night,by=c("Date_night","chamber","T_treatment"))
 #- calculate the amount of label respired, in units of mg 13C.
 # Assumes the night is 13 hours long (sunrise at 6:30am, sunset at 5:30pm)
 Rcanopy$AP <- getAP(Rcanopy$Keeling_int) # get the atom percent 13C from per mill data
-Rcanopy$Rcanopy_13C <- with(Rcanopy,R_mmol*AP/100*13/1000*13*1000) # convert to units of mg 13C
+Rcanopy$Rcanopy_13C <- with(Rcanopy,R_mmol*AP/100*13/1000*13*1000) # convert to units of g 13C
 
-# something is wrong, as this exceeds the amount of label assimilated...
+# something is wrong, as this exceeds the amount of label assimilated... 
+# C04 assimilated a total of ~717 mg 13C, but respired 572 mg 13C aboveground in just the first few days.
+#  How can this be???
 summaryBy(Rcanopy_13C~chamber+T_treatment,data=Rcanopy,FUN=sum) 
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
