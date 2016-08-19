@@ -33,6 +33,7 @@ Library(RColorBrewer)
 Library(reshape2)
 Library(data.table)
 Library(zoo)
+Library(magicaxis)
 
 #- load the data manipulation functions
 source("R/dataFunctions.R")

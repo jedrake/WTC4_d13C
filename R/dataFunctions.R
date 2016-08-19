@@ -13,7 +13,7 @@
 #---- read in the isotope data, do some manipulation, and return a dataframe
 getIso <- function(){
   #-- read in the isotope data
-  isodat <- read.csv("Data/13C pulse chase data entry_18Aug.csv")
+  isodat <- read.csv("Data/13C pulse chase data entry_19Aug.csv")
   names(isodat) <- c("sample.no","Date","Sample.name","Time.collected","Picarro.start.time","Picarro.end.time",
                      "CO2","CO2.sd","d13C","d13C.sd","CH4","CH4.sd","Notes")
   isodat$Date <- as.Date(isodat$Date)
@@ -95,9 +95,9 @@ getFluxes <- function(){
 #- function to return the atom percent 13C from a vector of per-mill data
 getAP <- function(d13C){
   ARC <- 0.0111803 # absolute ratio of VPDB. See http://www.isotope.uottawa.ca/guides/guides-atom-percent-en.html
-  #AP <- (100*ARC*(d13C/1000+1)) / (1+ARC*(d13C/1000+1))
+  #AP <- (100*ARC*(d13C/1000+1)) / (1+ARC*(d13C/1000+1)) # this was from the Ottawa website
   
-  AP <- (d13C/1000+1)*ARC*100 # alternative formulation. Is this right?
+  AP <- (d13C/1000+1)*ARC*100 # alternative formulation
   return(AP)
 }
 #-------------------------------------------------------------------------------------

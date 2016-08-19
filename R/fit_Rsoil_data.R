@@ -124,14 +124,16 @@ isoSR2 <- RsoilKP.df[!(RsoilKP.df$chamber %in% c("C01","C02")),] # exclude C01 a
 isoSR.m2 <- summaryBy(Keeling_int~T_treatment+Batch.DateTime,data=isoSR2,FUN=c(mean,standard.error))
 
 #- get averages of CO1 and CO2 to add
-isoSR3 <- RsoilKP.df[(RsoilKP.df$chamber %in% c("C01","C02")),] # exclude C01 and C02
+isoSR3 <- RsoilKP.df[(RsoilKP.df$chamber %in% c("C01","C02")),] # only include C01 and C02
 isoSR.m3 <- summaryBy(Keeling_int~Batch.DateTime,data=isoSR3,FUN=c(mean,standard.error))
 
 
 #---
 #- plot treatment averages
 pdf(file=paste("Output/Rsoil_d13C_",Sys.Date(),".pdf",sep=""))
-plotBy(Keeling_int.mean~Batch.DateTime|T_treatment,data=isoSR.m2,col=c("blue","red"),pch=16,ylim=c(-30,200),legend="F",
+par(mar=c(6,7,1,4))
+plotBy(Keeling_int.mean~Batch.DateTime|T_treatment,data=isoSR.m2,col=c("blue","red"),pch=16,ylim=c(-30,200),
+       legend="F",axes=F,xlab="",ylab="",
        panel.first=adderrorbars(x=isoSR.m2$Batch.DateTime,y=isoSR.m2$Keeling_int.mean,
                                 SE=isoSR.m2$Keeling_int.standard.error,direction="updown"))
 #- add the non-labeled trees
@@ -139,6 +141,11 @@ points(Keeling_int.mean~Batch.DateTime,data=isoSR.m3,pch=16,col="black",
        panel.first=adderrorbars(x=isoSR.m3$Batch.DateTime,y=isoSR.m3$Keeling_int.mean,
                                 SE=isoSR.m3$Keeling_int.standard.error,direction="updown"))
 abline(h=0)
+magaxis(side=c(2,4),las=1,frame.plot=T)
+axis.POSIXct(side=1,at=seq.POSIXt(from=as.POSIXct("2016-08-05 00:00:00",tz="UTC"),
+                                  to=as.POSIXct("2016-08-19 00:00:00",tz="UTC"),by="day"),las=2)
+title(ylab=expression(paste(R[soil]," ",delta^{13}, "C (\u2030)")),
+      main="Soil respiration",cex.lab=1.5)
 
 #- add a legend
 legend("topright",pch=16,col=c("blue","red","black"),legend=c("Ambient","Warmed","Unlabeled"))

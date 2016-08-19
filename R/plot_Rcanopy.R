@@ -92,11 +92,18 @@ isoCR.m2 <- summaryBy(Keeling_int~T_treatment+Batch.DateTime,data=isoCR2,FUN=c(m
 #---
 #- plot treatment averages
 pdf(file=paste("Output/Rcanopy_d13C_",Sys.Date(),".pdf",sep=""))
-plotBy(Keeling_int.mean~Batch.DateTime|T_treatment,data=isoCR.m2,col=c("blue","red"),pch=16,ylim=c(-30,800),legend="F",
+par(mar=c(6,7,1,4))
+plotBy(Keeling_int.mean~Batch.DateTime|T_treatment,data=isoCR.m2,col=c("blue","red"),pch=16,ylim=c(-30,800),
+       legend="F",axes=F,xlab="",ylab="",
        panel.first=adderrorbars(x=isoCR.m2$Batch.DateTime,y=isoCR.m2$Keeling_int.mean,
                                 SE=isoCR.m2$Keeling_int.standard.error,direction="updown"))
 abline(h=0)
-title(main="Canopy R")
+magaxis(side=c(2,4),las=1,frame.plot=T)
+axis.POSIXct(side=1,at=seq.POSIXt(from=as.POSIXct("2016-08-05 00:00:00",tz="UTC"),
+                                  to=as.POSIXct("2016-08-17 00:00:00",tz="UTC"),by="day"),las=2)
+title(ylab=expression(paste(R[canopy]," ",delta^{13}, "C (\u2030)")),
+      main="Canopy respiration",cex.lab=1.5)
+
 #- add a legend
 legend("topright",pch=16,col=c("blue","red"),legend=c("Ambient","Warmed"))
 dev.off()
@@ -135,7 +142,7 @@ Rcanopy <- merge(CR_KP.df,flux.night,by=c("Date_night","chamber","T_treatment"))
 #- calculate the amount of label respired, in units of mg 13C.
 # Assumes the night is 13 hours long (sunrise at 6:30am, sunset at 5:30pm)
 Rcanopy$AP <- getAP(Rcanopy$Keeling_int) # get the atom percent 13C from per mill data
-Rcanopy$Rcanopy_13C <- with(Rcanopy,R_mmol*AP/100*13/1000*13*1000) # convert to units of g 13C
+Rcanopy$Rcanopy_13C <- with(Rcanopy,R_mmol*AP/100*13/1000*13*1000) # convert to units of mg 13C
 
 # something is wrong, as this exceeds the amount of label assimilated... 
 # C04 assimilated a total of ~717 mg 13C, but respired 572 mg 13C aboveground in just the first few days.
