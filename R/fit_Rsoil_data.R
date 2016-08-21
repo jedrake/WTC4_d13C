@@ -178,8 +178,9 @@ Rsoil$AP <- getAP(Rsoil$Keeling_int)
 
 #- calculate 13C flux rate. Note that the chambers have a diameter of 3.25m
 area <- pi*(3.25/2)^2
-Rsoil$Rsoil_13C <- with(Rsoil,Rsoil*AP/100*60*60*1e-6*13*area*1000) #convert to units of mg 13C day-1
-summaryBy(Rsoil_13C~chamber+T_treatment,data=Rsoil,FUN=sum) 
+Rsoil$AP_natural <- getAP(-30)
+Rsoil$Rsoil_13C <- with(Rsoil,Rsoil*(AP-AP_natural)/100*60*60*1e-6*13*area*1000) #convert to units of mg 13C day-1
+summaryBy(Rsoil_13C~T_treatment,data=Rsoil,FUN=sum) 
 # C04 assimilated a total of ~717 mg 13C, but respired 56 mg 13C belowground in just the first few days.
 
 #------------------------------------------------------------------------

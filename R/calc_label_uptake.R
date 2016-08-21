@@ -154,7 +154,8 @@ isodat.int <- isodat.int[complete.cases(isodat.int),] # get rid of leading and t
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
 #- calculate and sum 13C uptake, convert from mmol 13CO2 s-1 to mmol 13CO2 min-1
-isodat.int$uptake13C <- with(isodat.int,FluxCO2*AP/100*60) 
+isodat.int$AP_natural <- getAP(-10) # get the natural atom percent
+isodat.int$uptake13C <- with(isodat.int,FluxCO2*(AP-AP_natural)/100*60) 
 
 #- zero fill any negative numbers
 negs <- which(isodat.int$uptake13C < 0)
@@ -262,7 +263,8 @@ for (i in 1:length(files)){
   
   #--- merge isotope dataframe with the viasala data
   viasala <- merge(iso.interp2,dat.m,by="DateTime")
-  viasala$uptake13C <- with(viasala,-1*dCO2_mol*AP/100*1000) # mmol 13CO2 min-1 
+  viasala$AP_natural <- getAP(-10)
+  viasala$uptake13C <- with(viasala,-1*dCO2_mol*(AP-AP_natural)/100*1000) # mmol 13CO2 min-1 
   
   #- sum uptake
   viasala.sums <- summaryBy(uptake13C~chamber,data=viasala,FUN=sum,keep.names=T,na.rm=T)
