@@ -78,11 +78,14 @@ palette(c("green","darkred","red","blue","orange","darkgrey","brown","lightblue"
 plotBy(Rsoil~DateTime|chamber,data=outdat,type="o",pch=16)
 
 #- plot Rsoil for each treatment
-outdat.m <- summaryBy(Rsoil~T_treatment+DateTime,data=outdat,FUN=c(mean,standard.error))
+outdat.m <- summaryBy(Rsoil~T_treatment+DateTime,data=subset(outdat,
+                                                             chamber %in% c("C04","C05","C06","C07","C08","C09")),
+                      FUN=c(mean,standard.error))
 
-plotBy(Rsoil.mean~DateTime|T_treatment,data=outdat.m,col=c("blue","red"),pch=16,ylim=c(0,5),
+plotBy(Rsoil.mean~DateTime|T_treatment,data=outdat.m,col=c("blue","red"),pch=16,ylim=c(0,5),type="o",
        panel.first=adderrorbars(x=outdat.m$DateTime,y=outdat.m$Rsoil.mean,
-                                SE=outdat.m$Rsoil.standard.error,direction="updown"))
+                                SE=outdat.m$Rsoil.standard.error,direction="updown"),
+       ylab="Rsoil (umol CO2 m-2 s-1)")
 dev.off()
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
@@ -110,6 +113,20 @@ isoRsoil <- subset(isodat,type=="SR")
 isoRsoil.l <- split(isoRsoil,as.factor(paste(isoRsoil$chamber,isoRsoil$Batch.DateTime,sep="-")))
 RsoilKP <- lapply(isoRsoil.l,FUN=fitKeeling)
 RsoilKP.df <- do.call(rbind,RsoilKP)
+
+
+#-- pull out two examples to fit
+ids <- which(isoRsoil$chamber=="C08" & isoRsoil$Batch.DateTime %in% c(as.POSIXct("2016-08-06 00:00:00",tz="UTC"),c(as.POSIXct("2016-08-06 16:00:00",tz="UTC"))))
+Rsoil.examples <- isoRsoil[ids,]
+Rsoil.examples$CO2i <- 1/Rsoil.examples$CO2
+
+windows();par(mar=c(6,6,1,1),cex.lab=2)
+plotBy(d13C~CO2i|as.factor(Batch.DateTime),data=Rsoil.examples,legend=F,col=c("black","red"),pch=16,
+       xlab="1/[CO2]",ylab=expression(paste(delta^{13}, "C (\u2030)")))
+lm1 <- lm(d13C~CO2i,data=Rsoil.examples[c(1,4,6),])
+lm2 <- lm(d13C~CO2i,data=Rsoil.examples[c(2,3,5),])
+abline(lm1,col="black")
+abline(lm2,col="red")
 
 
 #- plot chambers and then treatment averages
@@ -166,22 +183,86 @@ head(outdat)
 
 #- daily average Rsoil rate
 outdat$Date <- as.Date(outdat$DateTime)
-Rsoil.d <- summaryBy(Rsoil~Date+chamber+T_treatment,data=outdat,FUN=mean,keep.names=T)
+Rsoil.d <- summaryBy(Rsoil~Date+chamber+T_treatment,data=subset(outdat,chamber %in% c("C04","C05","C06","C07","C08","C09")),
+                                                                FUN=mean,keep.names=T)
+Rsoil.d$chamber <- factor(Rsoil.d$chamber)
 
 #- daily average Rsoil d13C
 isoSR2$Date <- as.Date(isoSR2$Batch.DateTime)
-Rsoil.d13C.d <- summaryBy(Keeling_int~Date+chamber+T_treatment,data=isoSR2,FUN=mean,keep.names=T)
+Rsoil.d13C.d <- summaryBy(Keeling_int~Date+chamber+T_treatment,data=subset(isoSR2,chamber %in% c("C04","C05","C06","C07","C08","C09")),,FUN=mean,keep.names=T)
 
-#- merge
+#- merge, add a vector of empty dates
 Rsoil <- merge(Rsoil.d,Rsoil.d13C.d,by=c("Date","chamber","T_treatment"))
-Rsoil$AP <- getAP(Rsoil$Keeling_int)
+key <- expand.grid(chamber=levels(Rsoil$chamber),Date=seq.Date(from=as.Date("2016-08-05"),
+                                                               to=as.Date("2016-08-16"),by=1))
+Rsoil <- merge(key,Rsoil,by=c("chamber","Date"),all.x=T)
 
-#- calculate 13C flux rate. Note that the chambers have a diameter of 3.25m
-area <- pi*(3.25/2)^2
-Rsoil$AP_natural <- getAP(-30)
-Rsoil$Rsoil_13C <- with(Rsoil,Rsoil*(AP-AP_natural)/100*60*60*1e-6*13*area*1000) #convert to units of mg 13C day-1
-summaryBy(Rsoil_13C~T_treatment,data=Rsoil,FUN=sum) 
-# C04 assimilated a total of ~717 mg 13C, but respired 56 mg 13C belowground in just the first few days.
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- loop over each chamber, gapfill missing data, calculate cumulative sum
+#- get and plot the cumulative sum of rsoil 13C respiration
+Rsoil.l <- split(Rsoil,Rsoil$chamber)
+for (i in 1:length(Rsoil.l)){
+  #- subset to just dates I want
+  Rsoil.l[[i]] <- subset(Rsoil.l[[i]],Date %in% seq.Date(from=as.Date("2016-08-06"),
+                                                                   to=as.Date("2016-08-15"),by=1))
+  
+  Rsoil.l[[i]]$T_treatment <- Rsoil.l[[i]]$T_treatment[1]
+  #- gapfill
+  Rsoil.l[[i]]$Keeling_int <- na.approx(Rsoil.l[[i]]$Keeling_int)
+  Rsoil.l[[i]]$Rsoil <- na.approx(Rsoil.l[[i]]$Rsoil)
+  
+  
+  #- calculate 13C flux rate. Note that the chambers have a diameter of 3.25m
+  Rsoil.l[[i]]$AP <- getAP(Rsoil.l[[i]]$Keeling_int) # get the atom percent 13C from per mill data
+  Rsoil.l[[i]]$AP_natural <- getAP(-30)         # get the atom percent 13C of "background" respiration
+  area <- pi*(3.25/2)^2
+  Rsoil.l[[i]]$Rsoil_13C <- with(Rsoil.l[[i]],Rsoil*(AP-AP_natural)/100*area*60*60*24*1e-6*13*1000) #convert to units of mg 13C day-1 EXCESS 13C
+  
+  
+  #- cumulative sum
+  Rsoil.l[[i]]$Rsoil_13C_cumsum <- cumsum(Rsoil.l[[i]]$Rsoil_13C)
+  
+  #------------------------------------------------------------------------
+  #------------------------------------------------------------------------
+  
+  
+  
+  
+
+}
+Rsoil2 <- do.call(rbind,Rsoil.l)
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+
+
+isoSR <- summaryBy(Rsoil_13C+Rsoil_13C_cumsum~T_treatment+Date,data=Rsoil2,FUN=c(mean,standard.error))
+
+
+#---
+#- plot treatment averages
+pdf(file=paste("Output/Rsoil_d13C_sums_",Sys.Date(),".pdf",sep=""))
+par(mar=c(6,7,1,4))
+plotBy(Rsoil_13C_cumsum.mean~Date|T_treatment,data=isoSR,col=c("blue","red"),pch=16,
+       legend="F",axes=F,xlab="",ylab="",ylim=c(0,250),
+       panel.first=adderrorbars(x=isoSR$Date,y=isoSR$Rsoil_13C_cumsum.mean,
+                                SE=isoSR$Rsoil_13C_cumsum.standard.error,direction="updown"))
+magaxis(side=c(2,4),las=1,frame.plot=T)
+axis.Date(side=1,at=seq.Date(from=as.Date("2016-08-05"),
+                             to=as.Date("2016-08-17"),by="day"),las=2)
+title(ylab=expression(R[soil]~(mg~13*C~excess)),main="Cumulative sum, Rsoil",cex.lab=1.5)
+
+#- add a legend
+legend("topleft",pch=16,col=c("blue","red"),legend=c("Ambient","Warmed"))
+dev.off()
+
+#- sum, then average across treatments
+iso.s <- summaryBy(Rsoil_13C~chamber+T_treatment,data=Rsoil2,FUN=c(sum),keep.names=T)
+iso.m <- summaryBy(Rsoil_13C~T_treatment,data=iso.s,FUN=mean)
 
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------

@@ -44,7 +44,7 @@ par(mar=c(5,6,1,1))
 layout(matrix(c(1,2), 2, 1, byrow = TRUE), 
        widths=c(1,1), heights=c(1,1))
 plotBy(R_mmol.mean~Date_night|T_treatment,data=flux.night.m,col=c("blue","red"),pch=16,ylim=c(0,50),legend="F",
-       type="o",cex=2,xlab="Date",ylab="R (mmol CO2 hr-1)",main="Rcanopy",
+       type="o",cex=2,xlab="Date",ylab="Rcanopy (mmol CO2 hr-1)",main="Rcanopy",
        panel.first=adderrorbars(x=flux.night.m$Date_night,y=flux.night.m$R_mmol.mean,
                                 SE=flux.night.m$R_mmol.standard.error,direction="updown"))
 
@@ -135,19 +135,75 @@ CR_KP_m <- summaryBy(Keeling_int~chamber+T_treatment+Date_night,data=CR_KP.df,FU
 
 #- daily average canopy respiration rate
 head(flux.night)
+flux.night <- subset(flux.night,chamber %in% c("C04","C05","C06","C07","C08","C09"))
 
 #- mergedatasets
-Rcanopy <- merge(CR_KP.df,flux.night,by=c("Date_night","chamber","T_treatment"))
+Rcanopy <- merge(CR_KP_m,flux.night,by=c("Date_night","chamber","T_treatment"),all.y=T)
+Rcanopy$chamber <- factor(Rcanopy$chamber)
 
 #- calculate the amount of label respired, in units of mg 13C.
 # Assumes the night is 13 hours long (sunrise at 6:30am, sunset at 5:30pm)
-Rcanopy$AP <- getAP(Rcanopy$Keeling_int) # get the atom percent 13C from per mill data
-Rcanopy$AP_natural <- getAP(-30)         # get the atom percent 13C of "background" respiration
-Rcanopy$Rcanopy_13C <- with(Rcanopy,R_mmol*(AP-AP_natural)/100*13/1000*13*1000) # convert to units of mg 13C of EXCESS 13C
 
-# something is wrong, as this exceeds the amount of label assimilated... 
-# C04 assimilated a total of ~717 mg 13C, but respired 572 mg 13C aboveground in just the first few days.
-#  How can this be???
-summaryBy(Rcanopy_13C~T_treatment,data=Rcanopy,FUN=sum) 
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- loop over each chamber, gapfill missing data, calculate cumulative sum
+#- get and plot the cumulative sum of 13C respiration
+Rcanopy.l <- split(Rcanopy,Rcanopy$chamber)
+for (i in 1:length(Rcanopy.l)){
+  #- subset to just dates I want
+  Rcanopy.l[[i]] <- subset(Rcanopy.l[[i]],Date_night %in% seq.Date(from=as.Date("2016-08-05"),
+                                                                   to=as.Date("2016-08-16"),by=1))
+  
+  #- gapfill
+  Rcanopy.l[[i]]$Keeling_int <- na.approx(Rcanopy.l[[i]]$Keeling_int)
+  
+  #- calculate 13C respired
+  Rcanopy.l[[i]]$AP <- getAP(Rcanopy.l[[i]]$Keeling_int) # get the atom percent 13C from per mill data
+  Rcanopy.l[[i]]$AP_natural <- getAP(-30)         # get the atom percent 13C of "background" respiration
+  Rcanopy.l[[i]]$Rcanopy_13C <- with(Rcanopy.l[[i]],R_mmol*(AP-AP_natural)/100*13/1000*13*1000) # convert to units of mg 13C of EXCESS 13C
+  
+  #- cumulative sum
+  Rcanopy.l[[i]]$Rcanopy_13C_cumsum <- cumsum(Rcanopy.l[[i]]$Rcanopy_13C)
+}
+Rcanopy2 <- do.call(rbind,Rcanopy.l)
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+
+
+
+#- calculate treatment averages over time, exclude C01 and C02. Note we haven't yet measured C01 or C02,
+#  so this isn't really necessary. We did measure some pre-treatment, and we may measure them again
+isoCS <- summaryBy(Rcanopy_13C+Rcanopy_13C_cumsum~T_treatment+Date_night,data=Rcanopy2,FUN=c(mean,standard.error))
+
+
+#---
+#- plot treatment averages
+pdf(file=paste("Output/Rcanopy_d13C_sums_",Sys.Date(),".pdf",sep=""))
+par(mar=c(6,7,1,4))
+plotBy(Rcanopy_13C_cumsum.mean~Date_night|T_treatment,data=isoCS,col=c("blue","red"),pch=16,
+       legend="F",axes=F,xlab="",ylab="",ylim=c(0,100),
+       panel.first=adderrorbars(x=isoCS$Date_night,y=isoCS$Rcanopy_13C_cumsum.mean,
+                                SE=isoCS$Rcanopy_13C_cumsum.standard.error,direction="updown"))
+magaxis(side=c(2,4),las=1,frame.plot=T)
+axis.Date(side=1,at=seq.Date(from=as.Date("2016-08-05"),
+                                  to=as.Date("2016-08-17"),by="day"),las=2)
+title(ylab=expression(R[canopy]~(mg~13*C~excess)),main="Cumulative sum, Rcanopy",cex.lab=1.5)
+
+#- add a legend
+legend("topleft",pch=16,col=c("blue","red"),legend=c("Ambient","Warmed"))
+dev.off()
+
+#- sum, then average across treatments
+iso.s <- summaryBy(Rcanopy_13C~chamber+T_treatment,data=Rcanopy2,FUN=c(sum),keep.names=T)
+iso.m <- summaryBy(Rcanopy_13C~T_treatment,data=iso.s,FUN=mean)
+
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------

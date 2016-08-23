@@ -56,16 +56,18 @@ stoptimes <- stoptimes[with(stoptimes,order(chamber)),]
 #- plot par, co2 uptake, and canopy isotopic composition. Note that ambient chambers have lower Co2 uptake.
 
 pdf(file="Output/Fluxes_during_labeling.pdf")
-layout(matrix(c(1,2,3,4), 4, 1, byrow = TRUE), 
-       widths=c(1,1,1,1), heights=c(1,1,1,1))
-par(mfrow=c(4,1),mar=c(1,6,1,1),oma=c(5,2,0,0),cex.lab=1.7)
+layout(matrix(c(1,2,3), 3, 1, byrow = TRUE), 
+       widths=c(1,1,1), heights=c(1,1,1))
+par(mfrow=c(3,1),mar=c(1,6,1,1),oma=c(5,2,0,0),cex.lab=1.7)
 #palette(c("black",brewer.pal(5,"Spectral")))
 palette(c("red","blue","orange","darkgrey","brown","lightblue"))
 
-plotBy(PAR~DateTime|chamber,data=labelday,type="o",ylab="PAR",legendwhere="topright",pch=16,cex=1.5)   ;abline(h=0)
-plotBy(FluxCO2~DateTime|chamber,data=labelday,ylim=c(-0.1,0.3),,pch=16,cex=1.5,type="o",ylab="CO2 Flux (mmol s-1)",legend=F)   ;abline(h=0)
+plotBy(FluxCO2~DateTime|chamber,data=labelday,ylim=c(-0.1,0.3),
+       legendwhere="topright",pch=16,cex=1.5,type="o",ylab="CO2 Flux (mmol s-1)",legend=T)   ;abline(h=0)
 plotBy(d13C~Collection.DateTime|chamber,data=labeling,pch=16,cex=1.5,type="b",legend=F)
-plotBy(AP~Collection.DateTime|chamber,data=labeling,pch=16,cex=1.5,type="b",legend=F)
+plotBy(CO2CChamb~DateTime|chamber,data=labelday,type="o",ylab="[CO2]",pch=16,cex=1.5,legend=F)   ;abline(h=0)
+
+#plotBy(AP~Collection.DateTime|chamber,data=labeling,pch=16,cex=1.5,type="b",legend=F)
 dev.off()
 #------------------------------------------------------------------------
 
