@@ -207,3 +207,29 @@ iso.m <- summaryBy(Rcanopy_13C~T_treatment,data=iso.s,FUN=mean)
 
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
+
+
+
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- compare leaf and canopy respiration d13C on night 1, do two-end member
+#  mixing model, compare the relative fractions of leaf and woody respiration
+isoLR <- subset(isodat,type=="LR" & chamber %in% c("C04","C05","C06","C07","C08","C09"))
+
+isoLRm <- summaryBy(d13C~T_treatment,FUN=mean,keep.names=T,
+                    data=subset(isoLR,Batch.DateTime < as.POSIXct("2016-08-06 02:00:00",tz="UTC")))
+
+isoCRm <- summaryBy(Keeling_int~T_treatment,data=subset(CR_KP_m,Date_night == as.Date("2016-08-05")),FUN=mean,keep.names=T)
+
+#- two end member mixing, leaf R is ~ 50% of canopy R
+isomm <- merge(isoLRm,isoCRm)
+isomm$LR_AP <- getAP(isomm$d13C)
+isomm$CR_AP <- getAP(isomm$Keeling_int)
+isoWR <- getAP(-30)
+
+isomm$Lfrac <- with(isomm,(CR_AP-isoWR)/(LR_AP-isoWR))
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
