@@ -115,18 +115,18 @@ RsoilKP <- lapply(isoRsoil.l,FUN=fitKeeling)
 RsoilKP.df <- do.call(rbind,RsoilKP)
 
 
-#-- pull out two examples to fit
-ids <- which(isoRsoil$chamber=="C08" & isoRsoil$Batch.DateTime %in% c(as.POSIXct("2016-08-06 00:00:00",tz="UTC"),c(as.POSIXct("2016-08-06 16:00:00",tz="UTC"))))
-Rsoil.examples <- isoRsoil[ids,]
-Rsoil.examples$CO2i <- 1/Rsoil.examples$CO2
-
-windows();par(mar=c(6,6,1,1),cex.lab=2)
-plotBy(d13C~CO2i|as.factor(Batch.DateTime),data=Rsoil.examples,legend=F,col=c("black","red"),pch=16,
-       xlab="1/[CO2]",ylab=expression(paste(delta^{13}, "C (\u2030)")))
-lm1 <- lm(d13C~CO2i,data=Rsoil.examples[c(1,4,6),])
-lm2 <- lm(d13C~CO2i,data=Rsoil.examples[c(2,3,5),])
-abline(lm1,col="black")
-abline(lm2,col="red")
+# #-- pull out two examples to fit
+# ids <- which(isoRsoil$chamber=="C08" & isoRsoil$Batch.DateTime %in% c(as.POSIXct("2016-08-06 00:00:00",tz="UTC"),c(as.POSIXct("2016-08-06 16:00:00",tz="UTC"))))
+# Rsoil.examples <- isoRsoil[ids,]
+# Rsoil.examples$CO2i <- 1/Rsoil.examples$CO2
+# 
+# windows();par(mar=c(6,6,1,1),cex.lab=2)
+# plotBy(d13C~CO2i|as.factor(Batch.DateTime),data=Rsoil.examples,legend=F,col=c("black","red"),pch=16,
+#        xlab="1/[CO2]",ylab=expression(paste(delta^{13}, "C (\u2030)")))
+# lm1 <- lm(d13C~CO2i,data=Rsoil.examples[c(1,4,6),])
+# lm2 <- lm(d13C~CO2i,data=Rsoil.examples[c(2,3,5),])
+# abline(lm1,col="black")
+# abline(lm2,col="red")
 
 
 #- plot chambers and then treatment averages
@@ -160,7 +160,7 @@ points(Keeling_int.mean~Batch.DateTime,data=isoSR.m3,pch=16,col="black",
 abline(h=0)
 magaxis(side=c(2,4),las=1,frame.plot=T)
 axis.POSIXct(side=1,at=seq.POSIXt(from=as.POSIXct("2016-08-05 00:00:00",tz="UTC"),
-                                  to=as.POSIXct("2016-08-19 00:00:00",tz="UTC"),by="day"),las=2)
+                                  to=as.POSIXct("2016-08-25 00:00:00",tz="UTC"),by="day"),las=2)
 title(ylab=expression(paste(R[soil]," ",delta^{13}, "C (\u2030)")),
       main="Soil respiration",cex.lab=1.5)
 
@@ -194,7 +194,7 @@ Rsoil.d13C.d <- summaryBy(Keeling_int~Date+chamber+T_treatment,data=subset(isoSR
 #- merge, add a vector of empty dates
 Rsoil <- merge(Rsoil.d,Rsoil.d13C.d,by=c("Date","chamber","T_treatment"))
 key <- expand.grid(chamber=levels(Rsoil$chamber),Date=seq.Date(from=as.Date("2016-08-05"),
-                                                               to=as.Date("2016-08-16"),by=1))
+                                                               to=as.Date("2016-08-25"),by=1))
 Rsoil <- merge(key,Rsoil,by=c("chamber","Date"),all.x=T)
 
 
@@ -208,7 +208,7 @@ Rsoil.l <- split(Rsoil,Rsoil$chamber)
 for (i in 1:length(Rsoil.l)){
   #- subset to just dates I want
   Rsoil.l[[i]] <- subset(Rsoil.l[[i]],Date %in% seq.Date(from=as.Date("2016-08-06"),
-                                                                   to=as.Date("2016-08-15"),by=1))
+                                                                   to=as.Date("2016-08-25"),by=1))
   
   Rsoil.l[[i]]$T_treatment <- Rsoil.l[[i]]$T_treatment[1]
   #- gapfill
@@ -248,12 +248,12 @@ isoSR <- summaryBy(Rsoil_13C+Rsoil_13C_cumsum~T_treatment+Date,data=Rsoil2,FUN=c
 pdf(file=paste("Output/Rsoil_d13C_sums_",Sys.Date(),".pdf",sep=""))
 par(mar=c(6,7,1,4))
 plotBy(Rsoil_13C_cumsum.mean~Date|T_treatment,data=isoSR,col=c("blue","red"),pch=16,
-       legend="F",axes=F,xlab="",ylab="",ylim=c(0,250),
+       legend="F",axes=F,xlab="",ylab="",ylim=c(0,350),
        panel.first=adderrorbars(x=isoSR$Date,y=isoSR$Rsoil_13C_cumsum.mean,
                                 SE=isoSR$Rsoil_13C_cumsum.standard.error,direction="updown"))
 magaxis(side=c(2,4),las=1,frame.plot=T)
 axis.Date(side=1,at=seq.Date(from=as.Date("2016-08-05"),
-                             to=as.Date("2016-08-17"),by="day"),las=2)
+                             to=as.Date("2016-08-25"),by="day"),las=2)
 title(ylab=expression(R[soil]~(mg~13*C~excess)),main="Cumulative sum, Rsoil",cex.lab=1.5)
 
 #- add a legend

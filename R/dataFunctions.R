@@ -13,7 +13,7 @@
 #---- read in the isotope data, do some manipulation, and return a dataframe
 getIso <- function(){
   #-- read in the isotope data
-  isodat <- read.csv("Data/13C pulse chase data entry_19Aug.csv")
+  isodat <- read.csv("Data/13C pulse chase data entry_26Aug.csv")
   names(isodat) <- c("sample.no","Date","Sample.name","Time.collected","Picarro.start.time","Picarro.end.time",
                      "CO2","CO2.sd","d13C","d13C.sd","CH4","CH4.sd","Notes")
   isodat$Date <- as.Date(isodat$Date)
@@ -57,10 +57,19 @@ getIso <- function(){
                           & isodat2$type=="SR" & isodat2$chamber=="C05" & isodat2$timefactor=="C")
   isodat3 <- isodat2[-toremove2,]
   
+  #- remove a bad point of canopy respiraiton measurement. C09-C at on 24 Aug 2016. Also C05A and C05C on 24 Aug 2016
+  toremove3 <- which(isodat3$Batch.DateTime==as.POSIXct("2016-08-24 18",format="%Y-%m-%d %H",tz="UTC") 
+                     & isodat3$type=="CR" & isodat3$chamber=="C09" & isodat3$timefactor=="C")
+  toremove4 <- which(isodat3$Batch.DateTime==as.POSIXct("2016-08-24 18",format="%Y-%m-%d %H",tz="UTC") 
+                     & isodat3$type=="CR" & isodat3$chamber=="C05" & isodat3$timefactor %in% c("A","C"))
+  toremove5 <- which(isodat3$Batch.DateTime==as.POSIXct("2016-08-10 18",format="%Y-%m-%d %H",tz="UTC") 
+                     & isodat3$type=="CR" & isodat3$chamber=="C07" & isodat3$timefactor %in% c("B"))
+  isodat4 <- isodat3[-c(toremove3,toremove4,toremove5),]
+  
   #--------------------------------------
   
   
-  return(isodat3)
+  return(isodat4)
 }
 #-------------------------------------------------------------------------------------
 

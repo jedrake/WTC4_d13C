@@ -43,12 +43,12 @@ pdf(file=paste("Output/Rcanopy_rate_",Sys.Date(),".pdf",sep=""))
 par(mar=c(5,6,1,1))
 layout(matrix(c(1,2), 2, 1, byrow = TRUE), 
        widths=c(1,1), heights=c(1,1))
-plotBy(R_mmol.mean~Date_night|T_treatment,data=flux.night.m,col=c("blue","red"),pch=16,ylim=c(0,50),legend="F",
+plotBy(R_mmol.mean~Date_night|T_treatment,data=flux.night.m,col=c("blue","red"),pch=16,ylim=c(0,55),legend="F",
        type="o",cex=2,xlab="Date",ylab="Rcanopy (mmol CO2 hr-1)",main="Rcanopy",
        panel.first=adderrorbars(x=flux.night.m$Date_night,y=flux.night.m$R_mmol.mean,
                                 SE=flux.night.m$R_mmol.standard.error,direction="updown"))
 
-plotBy(R_mmol.mean~Tair_al.mean|T_treatment,data=flux.night.m,col=c("blue","red"),pch=16,ylim=c(0,50),legend="F",
+plotBy(R_mmol.mean~Tair_al.mean|T_treatment,data=flux.night.m,col=c("blue","red"),pch=16,ylim=c(0,55),legend="F",
        type="p",cex=2,xlab="Tair (deg C)",ylab="R (mmol CO2 hr-1)",
        panel.first=adderrorbars(x=flux.night.m$Tair_al.mean,y=flux.night.m$R_mmol.mean,
                                 SE=flux.night.m$R_mmol.standard.error,direction="updown"))
@@ -100,7 +100,7 @@ plotBy(Keeling_int.mean~Batch.DateTime|T_treatment,data=isoCR.m2,col=c("blue","r
 abline(h=0)
 magaxis(side=c(2,4),las=1,frame.plot=T)
 axis.POSIXct(side=1,at=seq.POSIXt(from=as.POSIXct("2016-08-05 00:00:00",tz="UTC"),
-                                  to=as.POSIXct("2016-08-17 00:00:00",tz="UTC"),by="day"),las=2)
+                                  to=as.POSIXct("2016-08-25 00:00:00",tz="UTC"),by="day"),las=2)
 title(ylab=expression(paste(R[canopy]," ",delta^{13}, "C (\u2030)")),
       main="Canopy respiration",cex.lab=1.5)
 
@@ -159,7 +159,7 @@ Rcanopy.l <- split(Rcanopy,Rcanopy$chamber)
 for (i in 1:length(Rcanopy.l)){
   #- subset to just dates I want
   Rcanopy.l[[i]] <- subset(Rcanopy.l[[i]],Date_night %in% seq.Date(from=as.Date("2016-08-05"),
-                                                                   to=as.Date("2016-08-16"),by=1))
+                                                                   to=as.Date("2016-08-24"),by=1))
   
   #- gapfill
   Rcanopy.l[[i]]$Keeling_int <- na.approx(Rcanopy.l[[i]]$Keeling_int)
@@ -194,7 +194,7 @@ plotBy(Rcanopy_13C_cumsum.mean~Date_night|T_treatment,data=isoCS,col=c("blue","r
                                 SE=isoCS$Rcanopy_13C_cumsum.standard.error,direction="updown"))
 magaxis(side=c(2,4),las=1,frame.plot=T)
 axis.Date(side=1,at=seq.Date(from=as.Date("2016-08-05"),
-                                  to=as.Date("2016-08-17"),by="day"),las=2)
+                                  to=as.Date("2016-08-25"),by="day"),las=2)
 title(ylab=expression(R[canopy]~(mg~13*C~excess)),main="Cumulative sum, Rcanopy",cex.lab=1.5)
 
 #- add a legend
@@ -230,6 +230,6 @@ isomm$LR_AP <- getAP(isomm$d13C)
 isomm$CR_AP <- getAP(isomm$Keeling_int)
 isoWR <- getAP(-30)
 
-isomm$Lfrac <- with(isomm,(CR_AP-isoWR)/(LR_AP-isoWR))
+isomm$Lfrac <- with(isomm,(CR_AP-isoWR)/(LR_AP-isoWR)) # estimate the % contribution of leaf respiration.
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
