@@ -21,7 +21,7 @@ source("R/loadLibraries.R")
 #  This is going to take considerable work... Let's have a go.
 flux.all <- getFluxes()
 
-#- subset to just teh data after the labeling day
+#- subset to just the data after the labeling day
 flux.lab <- subset(flux.all,as.Date(DateTime)>=as.Date("2016-08-05"))
 
 #- clean up the flux data
@@ -52,6 +52,7 @@ plotBy(R_mmol.mean~Tair_al.mean|T_treatment,data=flux.night.m,col=c("blue","red"
        type="p",cex=2,xlab="Tair (deg C)",ylab="R (mmol CO2 hr-1)",
        panel.first=adderrorbars(x=flux.night.m$Tair_al.mean,y=flux.night.m$R_mmol.mean,
                                 SE=flux.night.m$R_mmol.standard.error,direction="updown"))
+
 dev.off()
 
 #------------------------------------------------------------------------
@@ -88,6 +89,9 @@ plotBy(r2~Batch.DateTime|chamber,data=CR_KP.df,legend=F,ylim=c(0,1))
 isoCR2 <- CR_KP.df[!(CR_KP.df$chamber %in% c("C01","C02")),] # exclude C01 and C02
 isoCR.m2 <- summaryBy(Keeling_int~T_treatment+Batch.DateTime,data=isoCR2,FUN=c(mean,standard.error))
 
+isoCR3 <- CR_KP.df[(CR_KP.df$chamber %in% c("C01","C02")),] # INCLUDE C01 and C02
+isoCR.m3 <- summaryBy(Keeling_int~T_treatment+Batch.DateTime,data=isoCR3,FUN=c(mean,standard.error))
+
 
 #---
 #- plot treatment averages
@@ -100,9 +104,14 @@ plotBy(Keeling_int.mean~Batch.DateTime|T_treatment,data=isoCR.m2,col=c("blue","r
 abline(h=0)
 magaxis(side=c(2,4),las=1,frame.plot=T)
 axis.POSIXct(side=1,at=seq.POSIXt(from=as.POSIXct("2016-08-05 00:00:00",tz="UTC"),
-                                  to=as.POSIXct("2016-08-25 00:00:00",tz="UTC"),by="day"),las=2)
+                                  to=as.POSIXct("2016-09-01 00:00:00",tz="UTC"),by="day"),las=2)
 title(ylab=expression(paste(R[canopy]," ",delta^{13}, "C (\u2030)")),
       main="Canopy respiration",cex.lab=1.5)
+
+#- add the non-labeled trees
+points(Keeling_int.mean~Batch.DateTime,data=isoCR.m3,pch=16,col="black",
+       panel.first=adderrorbars(x=isoCR.m3$Batch.DateTime,y=isoCR.m3$Keeling_int.mean,
+                                SE=isoCR.m3$Keeling_int.standard.error,direction="updown"))
 
 #- add a legend
 legend("topright",pch=16,col=c("blue","red"),legend=c("Ambient","Warmed"))

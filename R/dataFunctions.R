@@ -13,7 +13,7 @@
 #---- read in the isotope data, do some manipulation, and return a dataframe
 getIso <- function(){
   #-- read in the isotope data
-  isodat <- read.csv("Data/13C pulse chase data entry_26Aug.csv")
+  isodat <- read.csv("Data/13C pulse chase data entry_2Sept.csv")
   names(isodat) <- c("sample.no","Date","Sample.name","Time.collected","Picarro.start.time","Picarro.end.time",
                      "CO2","CO2.sd","d13C","d13C.sd","CH4","CH4.sd","Notes")
   isodat$Date <- as.Date(isodat$Date)

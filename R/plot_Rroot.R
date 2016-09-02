@@ -49,7 +49,7 @@ points(d13C.mean~Batch.DateTime,data=isoRR.m3,pch=16,col="black",
 abline(h=0)
 magaxis(side=c(2,4),las=1,frame.plot=T)
 axis.POSIXct(side=1,at=seq.POSIXt(from=as.POSIXct("2016-08-05 00:00:00",tz="UTC"),
-                                  to=as.POSIXct("2016-08-25 00:00:00",tz="UTC"),by="day"),las=2)
+                                  to=as.POSIXct("2016-09-01 00:00:00",tz="UTC"),by="day"),las=2)
 title(ylab=expression(paste(R[root]," ",delta^{13}, "C (\u2030)")),
       main="Root respiration",cex.lab=1.5)
 
