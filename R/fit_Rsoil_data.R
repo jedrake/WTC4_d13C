@@ -160,7 +160,7 @@ points(Keeling_int.mean~Batch.DateTime,data=isoSR.m3,pch=16,col="black",
 abline(h=0)
 magaxis(side=c(2,4),las=1,frame.plot=T)
 axis.POSIXct(side=1,at=seq.POSIXt(from=as.POSIXct("2016-08-05 00:00:00",tz="UTC"),
-                                  to=as.POSIXct("2016-08-25 00:00:00",tz="UTC"),by="day"),las=2)
+                                  to=as.POSIXct("2016-09-25 00:00:00",tz="UTC"),by="day"),las=2)
 title(ylab=expression(paste(R[soil]," ",delta^{13}, "C (\u2030)")),
       main="Soil respiration",cex.lab=1.5)
 
@@ -171,6 +171,40 @@ dev.off()
 #------------------------------------------------------------------------
 
 
+
+
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+#- fit Elise's preferred model, from Pendall et al. 2011
+head(isoSR2)
+isoSR3 <- subset(isoSR2,Batch.DateTime > as.POSIXct("2016-08-07 00:00:00",tz="UTC") 
+  & chamber %in% c("C04","C05","C06","C07","C08","C09"))
+isoSR3$chamber <- factor(isoSR3$chamber)
+isoSR3$time <- as.numeric(difftime(isoSR3$Batch.DateTime,as.POSIXct("2016-08-07 00:00:00",tz="UTC"),units="hours"))
+
+#- add in the amount of label taken up. Assumes that "calc_label_uptake.R" has been run
+isoSR4 <- merge(isoSR3,isodat.sums,by=c("T_treatment","chamber"))
+
+
+isoSR4.l <- split(isoSR4,isoSR4$chamber)
+fits.list <- list()
+windows(80,80);par(mfrow=c(2,3))
+for (i in 1:length(isoSR4.l)){
+  dat <- isoSR4.l[[i]]
+  dat$Yvar <- with(dat,Keeling_int/uptake13CO2_mmol)
+
+  fits.list[[i]] <- nls(Yvar  ~ Cl*k*exp(-k*time)+r,start=list(Cl=300,k=0.01,r=-3),data=dat,algorithm="port",
+                      lower=c(0,0,-100),upper=c(1e6,2,100))
+  
+  plot(Yvar~time,data=dat,cex=2,ylim=c(-3,5))
+  lines(predict(fits.list[[i]],newdata=dat$time)~dat$time,type="l",lwd=3)
+  legend("topright",legend=dat$chamber[1],bty="n")
+}
+results <- cbind(isodat.sums[,1:2],do.call(rbind,lapply(fits.list,coef)))
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
 
 
 #------------------------------------------------------------------------
